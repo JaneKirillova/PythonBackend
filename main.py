@@ -4,11 +4,12 @@ from models.user import User
 from models.request import Request
 from starlette import status
 from starlette.responses import Response
+from models.one_item import Item
 
 app = FastAPI()
 
 
-class PurchasesManager():
+class PurchasesManager:
 
     def __init__(self):
         self.users = Users_container()
@@ -40,6 +41,7 @@ manager = PurchasesManager()
 @app.get("/")
 async def root():
     return Response("You are using your purchases tracker", status_code=status.HTTP_200_OK)
+
 
 @app.get("/clear_base")
 async def clear():
@@ -79,6 +81,6 @@ async def add_item(user_id: int, request: Request):
 
 
 @app.get("/get_item/{user_id}/{item_name}")
-async def get_item(user_id: int, item_name: str):
+async def get_item(user_id: int, item_name: str) -> Item:
     manager.check_user_id(user_id)
     return manager.users.get_user(user_id).get_item(item_name)
