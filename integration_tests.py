@@ -40,3 +40,7 @@ class IntegrationTests(unittest.TestCase):
         print(bad_item_request.text)
         self.assertEqual(404, bad_item_request.status_code)
         self.assertEqual('{"detail":"Item price can not be negative"}', bad_item_request.text)
+
+
+if __name__ == "__main__":
+    unittest.main()
