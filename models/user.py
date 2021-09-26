@@ -12,9 +12,11 @@ class User:
         else:
             self.items[request.item_name].change_amount(request.item_amount)
 
-    def get_items_amount(self):
+    def get_different_items_amount(self):
         return len(self.items)
 
     def get_item(self, item_name):
+        if item_name not in self.items:
+            raise Exception("Can not find item")
         return self.items[item_name]
 
