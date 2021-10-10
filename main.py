@@ -1,10 +1,15 @@
+import graphene
 from fastapi import FastAPI, HTTPException
-from models.users_container import Users_container
-from models.user import User
-from models.request import Request
+import graphql
 from starlette import status
+from starlette.graphql import GraphQLApp
 from starlette.responses import Response
+
+from models.graphql_user import *
 from models.one_item import Item
+from models.request import Request
+from models.user import User
+from models.users_container import Users_container
 
 app = FastAPI()
 
@@ -84,3 +89,40 @@ async def add_item(user_id: int, request: Request):
 async def get_item(user_id: int, item_name: str) -> Item:
     manager.check_user_id(user_id)
     return manager.users.get_user(user_id).get_item(item_name)
+
+
+class Query(graphene.ObjectType):
+    item = Field(GraphQLItem, user_id=Int(), name=String())
+    user = Field(GraphQlUser, user_id=Int())
+    users = List(GraphQlUser)
+
+    def resolve_users(self, info):
+        users_to_return = list()
+        for user_id, user in enumerate(manager.users.users):
+            items_to_ret = list()
+            for i in user.items:
+                items_to_ret.append(GraphQLItem(user.items[i].name, user.items[i].price, user.items[i].amount))
+            users_to_return.append(GraphQlUser(user_id, "user" + str(user_id), items_to_ret))
+        return users_to_return
+
+    def resolve_user(self, info, user_id):
+        if user_id >= manager.users.users_amount():
+            raise graphql.GraphQLError("There is no user with this id " + str(user_id))
+        user = manager.users.get_user(user_id)
+        items_to_ret = list()
+        for i in user.items:
+            items_to_ret.append(GraphQLItem(user.items[i].name, user.items[i].price, user.items[i].amount))
+        return GraphQlUser(user_id, "user" + str(user_id), items_to_ret)
+
+    def resolve_item(self, info, user_id, name):
+        if user_id >= manager.users.users_amount():
+            raise graphql.GraphQLError("There is no user with this id " + str(user_id))
+        user = manager.users.get_user(user_id)
+        try:
+            item = user.get_item(name)
+            return GraphQLItem(name=item.name, price=item.price, amount=item.amount)
+        except Exception:
+            raise graphql.GraphQLError("there is no item with name " + name)
+
+
+app.add_route("/graphql", GraphQLApp(schema=graphene.Schema(query=Query)))

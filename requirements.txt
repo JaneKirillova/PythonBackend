@@ -2,3 +2,6 @@ pydantic
 fastapi
 pytest
 pytest-asyncio
+graphene
+starlette
+requests
